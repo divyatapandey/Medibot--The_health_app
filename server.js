@@ -15,9 +15,9 @@ app.use(bodyParser.json());
 // Connect Database
 connectDB();
 
-// Routes
-app.use("/api/auth", require("./routes/authRoutes"));
-app.use("/api/medicine", require("./routes/medicineRoutes"));
+// Routes with versioning
+app.use("/v1/api/auth", require("./routes/authRoutes"));
+app.use("/v1/api/medicine", require("./routes/medicineRoutes"));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
