@@ -1,18 +1,16 @@
-const multer = require("multer");
-const Report = require("../models/Report");
-const pdfParse = require("pdf-parse");
-const Tesseract = require("tesseract.js");
-const fs = require("fs");
-const path = require("path");
+const express = require('express');
+const multer = require('multer');
+const pdfParse = require('pdf-parse');
+const Tesseract = require('tesseract.js');
+const path = require('path');
+const fs = require('fs');
+const { Report } = require('../models/Report'); // Importing the Report model
 
-// Define Multer Storage (stores files in memory)
+// Setting up multer to store files in memory
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Export `upload` middleware
-exports.upload = upload;
-
-// Upload & Analyze Report
-exports.analyzeReport = async (req, res) => {
+// Analyze the report after uploading the file
+async function analyzeReport(req, res) {
     try {
         if (!req.file) {
             return res.status(400).json({ message: "No file uploaded" });
@@ -21,80 +19,80 @@ exports.analyzeReport = async (req, res) => {
         const { originalname, buffer, mimetype } = req.file;
         let extractedText = "";
 
-        // Extract text from file
+        // Text extraction logic based on file type
         if (mimetype === "application/pdf") {
             const pdfData = await pdfParse(buffer);
-            extractedText = pdfData.text;
+            extractedText = pdfData.text; // Extracting text from PDF
         } else if (mimetype.startsWith("image/")) {
-            const tempPath = path.join(__dirname, `../uploads/${originalname}`);
-            fs.writeFileSync(tempPath, buffer);
-            const { data } = await Tesseract.recognize(tempPath, "eng");
+            const { data } = await Tesseract.recognize(buffer, "eng"); // Extracting text from image
             extractedText = data.text;
-            fs.unlinkSync(tempPath); // Delete temp file
         } else {
             return res.status(400).json({ message: "Unsupported file type" });
         }
 
-        // Analyze extracted text
+        // Example analysis functions for extracted text
         const analysisResult = {
             haemoglobin: analyzeHaemoglobin(extractedText),
-            bloodPressure: analyzeBloodPressure(extractedText),
             sugarLevel: analyzeSugarLevel(extractedText),
         };
 
-        // Save report details in MongoDB
+        // Save only the analysis results to MongoDB
         const newReport = new Report({
             filename: originalname,
             extractedText,
             analysis: analysisResult,
         });
 
-        await newReport.save();
+        await newReport.save(); // Save report to MongoDB
 
         res.json({
             message: "Analysis complete",
             reportId: newReport._id,
             analysis: analysisResult,
         });
-
     } catch (error) {
+        console.error("Error processing report:", error);
         res.status(500).json({ message: "Error processing report", error: error.message });
     }
-};
+}
 
-// Extract Haemoglobin Level
+// Example analysis function for haemoglobin
+// Example analysis function for haemoglobin
 function analyzeHaemoglobin(text) {
-    const match = text.match(/Haemoglobin\s*[:=]?\s*(\d+(\.\d+)?)/i);
-    if (match) {
-        const level = parseFloat(match[1]);
-        if (level < 12) return `Low (${level} g/dL)`;
-        if (level > 16) return `High (${level} g/dL)`;
-        return `Normal (${level} g/dL)`;
+    const regex = /Haemoglobin\s*[:]?\s*(\d+(\.\d+)?)/i;
+    const match = text.match(regex);
+    const haemoglobin = match ? parseFloat(match[1]) : null;
+
+    // Check if the haemoglobin level is within the optimal range (12-16 g/dL for women, 13-18 g/dL for men)
+    if (haemoglobin !== null) {
+        if (haemoglobin >= 12 && haemoglobin <= 16) {
+            return { value: haemoglobin, message: "Haemoglobin level is optimal (for women)." };
+        } else if (haemoglobin >= 13 && haemoglobin <= 18) {
+            return { value: haemoglobin, message: "Haemoglobin level is optimal (for men)." };
+        } else {
+            return { value: haemoglobin, message: "Haemoglobin level is not optimal." };
+        }
+    } else {
+        return { value: null, message: "Haemoglobin level not found." };
     }
-    return "Haemoglobin level not found.";
 }
 
-// Extract Blood Pressure
-function analyzeBloodPressure(text) {
-    const match = text.match(/Blood Pressure\s*[:=]?\s*(\d{2,3})\/(\d{2,3})/i);
-    if (match) {
-        const systolic = parseInt(match[1]);
-        const diastolic = parseInt(match[2]);
-        if (systolic > 140 || diastolic > 90) return `High (${systolic}/${diastolic} mmHg)`;
-        if (systolic < 90 || diastolic < 60) return `Low (${systolic}/${diastolic} mmHg)`;
-        return `Normal (${systolic}/${diastolic} mmHg)`;
-    }
-    return "Blood Pressure not found.";
-}
-
-// Extract Sugar Level
+// Example analysis function for sugar level
 function analyzeSugarLevel(text) {
-    const match = text.match(/(Blood Sugar|Glucose)\s*[:=]?\s*(\d+(\.\d+)?)/i);
-    if (match) {
-        const level = parseFloat(match[2]);
-        if (level < 70) return `Low (${level} mg/dL)`;
-        if (level > 140) return `High (${level} mg/dL)`;
-        return `Normal (${level} mg/dL)`;
+    // Adjust the regex to handle variations like "Blood Sugar: 95 mg/dL"
+    const regex = /Blood\s*Sugar\s*[:\s]?\s*(\d+(\.\d+)?)/i;
+    const match = text.match(regex);
+    const sugarLevel = match ? parseFloat(match[1]) : null;
+
+    // Check if the sugar level is within the optimal range (70 - 100 mg/dL)
+    if (sugarLevel >= 70 && sugarLevel <= 100) {
+        return { value: sugarLevel, message: "Blood sugar level is optimal." };
+    } else if (sugarLevel !== null) {
+        return { value: sugarLevel, message: "Blood sugar level is not optimal." };
+    } else {
+        return { value: null, message: "Blood sugar level not found." };
     }
-    return "Blood Sugar level not found.";
 }
+
+
+module.exports = { upload, analyzeReport };
