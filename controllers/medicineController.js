@@ -1,9 +1,10 @@
+//this has to be updated
 const MedicineReminder = require("../models/MedicineReminder");
-const sendEmail = require("../utils/sendEmail"); // Import email function
+const sendEmail = require("../utils/sendEmail"); 
 
 exports.addReminder = async (req, res) => {
     try {
-        console.log("Received Reminder Data:", req.body); // Debugging log
+        console.log("Received Reminder Data:", req.body); 
 
         const { email, medicineName, dosage, time, days } = req.body;
         if (!email || !medicineName || !dosage || !time || !days.length) {

@@ -6,7 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const { Report } = require('../models/Report'); // Importing the Report model
 
-// Setting up multer to store files in memory
+//  multer to store files in memory
 const upload = multer({ storage: multer.memoryStorage() });
 
 // Analyze the report after uploading the file

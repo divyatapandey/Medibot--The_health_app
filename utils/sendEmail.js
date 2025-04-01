@@ -1,3 +1,4 @@
+//this has to be updated
 const nodemailer = require("nodemailer");
 require("dotenv").config(); //environment variables
 
