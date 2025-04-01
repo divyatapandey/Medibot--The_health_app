@@ -3,7 +3,6 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const dotenv = require("dotenv");
 const connectDB = require("./config/db");
-const { sendEmail } = require("./utils/sendEmail");
 
 dotenv.config();
 const app = express();
@@ -17,8 +16,7 @@ connectDB();
 
 // Routes with versioning
 app.use("/v1/api/auth", require("./routes/authRoutes"));
-app.use("/v1/api/medicine", require("./routes/medicineRoutes"));
-app.use("/v1/api/appointments", require("./routes/appointmentRoutes"));
+app.use("/v1/api/email", require("./routes/emailRoutes"));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

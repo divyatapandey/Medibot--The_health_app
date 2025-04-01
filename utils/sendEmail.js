@@ -10,26 +10,32 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-/**
- * Send email function
- * @param {string} to - Receiver's email
- * @param {string} subject - Email subject
- * @param {string} text - Email body
- */
-const sendEmail = async (to, subject, text) => {
-    try {
-        const mailOptions = {
-            from: process.env.EMAIL_USER,
-            to,
-            subject,
-            text
-        };
+const sendEmail = async (req, res) => {
+    const { to, subject, text, html } = req.body;
 
+    // Validate input
+    if (!to || !subject || (!text && !html)) {
+        return res.status(400).json({ 
+            message: 'Missing required fields: to, subject, and either text or html' 
+        });
+    }
+
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to,
+        subject,
+        text,
+        html
+    };
+
+    try {
         await transporter.sendMail(mailOptions);
         console.log(`Email sent to ${to}`);
+        res.status(200).json({ message: 'Email sent successfully' });
     } catch (error) {
-        console.error("Error sending email:", error);
+        console.error('Error sending email:', error);
+        res.status(500).json({ message: 'Failed to send email', error: error.message });
     }
 };
 
-module.exports = sendEmail;
+module.exports = { sendEmail };
