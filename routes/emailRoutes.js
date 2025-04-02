@@ -1,8 +1,8 @@
 const express = require('express');
-const { sendEmail } = require('../utils/sendEmail');
+const { sendEmailHandler } = require('../utils/sendEmail');
 const { authenticateUser } = require('../middleware/auth');
 const router = express.Router();
 
-router.post('/send', authenticateUser, sendEmail);
+router.post('/send', authenticateUser, sendEmailHandler);
 
 module.exports = router; 

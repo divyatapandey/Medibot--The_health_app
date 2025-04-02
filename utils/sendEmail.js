@@ -10,6 +10,7 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+// Modified to accept direct parameters instead of req/res
 const sendEmail = async (req, res) => {
     const { to, subject, text, html } = req.body;
 
@@ -38,4 +39,16 @@ const sendEmail = async (req, res) => {
     }
 };
 
-module.exports = { sendEmail };
+// For API endpoint
+const sendEmailHandler = async (req, res) => {
+    try {
+        await sendEmail(req, res);
+    } catch (error) {
+        res.status(500).json({ 
+            message: 'Failed to send email', 
+            error: error.message 
+        });
+    }
+};
+
+module.exports = { sendEmail, sendEmailHandler };

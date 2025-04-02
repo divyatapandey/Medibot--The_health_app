@@ -1,4 +1,5 @@
 const Appointment = require("../models/Appointment");
+const { sendEmail } = require("../utils/sendEmail");
 
 // Helper function to generate all possible time slots
 const generateTimeSlots = () => {
@@ -13,7 +14,8 @@ const generateTimeSlots = () => {
 exports.bookAppointment = async (req, res) => {
     try {
         const { doctorName, patientName, timeSlot, date } = req.body;
-
+        const userEmail = req.user.email; // Get email from JWT token
+        console.log(userEmail);
         // Validate input
         if (!doctorName || !patientName || !timeSlot || !date) {
             return res.status(400).json({ 
@@ -38,6 +40,38 @@ exports.bookAppointment = async (req, res) => {
         });
 
         await appointment.save();
+
+        // Create a mock request body for sendEmail
+        const emailReq = {
+            body: {
+                to: userEmail,
+                subject: "Appointment Confirmation",
+                html: `
+                    <h1>Appointment Confirmed!</h1>
+                    <p>Dear ${patientName},</p>
+                    <p>Your appointment has been successfully booked:</p>
+                    <ul>
+                        <li><strong>Doctor:</strong> ${doctorName}</li>
+                        <li><strong>Date:</strong> ${new Date(date).toLocaleDateString()}</li>
+                        <li><strong>Time:</strong> ${timeSlot}</li>
+                    </ul>
+                    <p>Please arrive 10 minutes before your scheduled time.</p>
+                    <p>Best regards,<br>Medical Team</p>
+                `
+            }
+        };
+
+        // Create a mock response object
+        const emailRes = {
+            status: (code) => ({
+                json: (data) => {
+                    console.log('Email status:', code, data);
+                }
+            })
+        };
+
+        // Send the email
+        await sendEmail(emailReq, emailRes);
 
         res.status(201).json({
             message: "Appointment booked successfully",
