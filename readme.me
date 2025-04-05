@@ -1,0 +1,136 @@
+# API Documentation
+
+## Base URL
+`http://localhost:5000/v1/api`
+
+## Authentication
+All endpoints require JWT token in header:
+
+## Endpoints
+
+### 1. Authentication
+
+#### Register User
+
+```
+POST /auth/signup
+```
+Request:
+```json
+{
+    "name": "John Doe",
+    "email": "john@example.com",
+    "password": "yourpassword"
+}
+```
+Response:
+```json
+{
+    "message": "User registered successfully",
+    "email": "john@example.com"
+}
+```
+
+#### Login
+
+```
+POST /auth/login
+```
+Request:
+```json
+{
+    "email": "john@example.com",
+    "password": "yourpassword"
+}
+```
+Response:
+```json
+{
+    "token": "eyJhbGciOiJIUzI1...",
+    "email": "john@example.com"
+}
+```
+
+### 2. Appointments
+
+#### Book Appointment
+
+```
+POST /appointment
+```
+Request:
+```json
+{
+    "doctorName": "Dr. Smith",
+    "patientName": "John Doe",
+    "timeSlot": "9:00-10:00",
+    "date": "2024-03-20"
+}
+```
+Response:
+```json
+{
+    "message": "Appointment booked successfully",
+    "appointment": {
+        "doctorName": "Dr. Smith",
+        "patientName": "John Doe",
+        "timeSlot": "9:00-10:00",
+        "date": "2024-03-20T00:00:00.000Z",
+        "_id": "...",
+        "createdAt": "...",
+        "updatedAt": "..."
+    }
+}
+```
+
+#### Get Doctor's Schedule
+
+```
+GET /appointment/Dr.%20Smith?date=2024-03-20
+```
+Response:
+```json
+{
+    "doctorName": "Dr. Smith",
+    "date": "2024-03-20",
+    "availableSlots": [
+        "10:00-11:00",
+        "11:00-12:00",
+        "..."
+    ],
+    "bookedSlots": [
+        "9:00-10:00",
+        "..."
+    ]
+}
+```
+
+### 3. Email Service
+
+#### Send Email
+
+```
+POST /email/send
+```
+Request:
+```json
+{
+    "to": "recipient@example.com",
+    "subject": "Test Email",
+    "text": "This is a test email",
+    // OR use HTML
+    "html": "<h1>Test Email</h1><p>This is a test email</p>"
+}
+```
+Response:
+```json
+{
+    "message": "Email sent successfully"
+}
+```
+
+## Notes
+- Time slots are available from 9:00 AM to 7:00 PM in 1-hour intervals
+- Appointments require unique combinations of doctorName, timeSlot, and date
+- Date format should be YYYY-MM-DD
+- Time slot format should be HH:00-HH:00 (24-hour format)
