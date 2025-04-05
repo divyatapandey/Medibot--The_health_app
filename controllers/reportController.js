@@ -17,33 +17,37 @@ async function analyzeReport(req, res) {
         }
 
         const { originalname, buffer, mimetype } = req.file;
+        const email = req.body.email;  // ✅ This is how you get email from FormData
+
+        if (!email) {
+            return res.status(400).json({ message: "Email is required" });
+        }
+
         let extractedText = "";
 
-        // Text extraction logic based on file type
         if (mimetype === "application/pdf") {
             const pdfData = await pdfParse(buffer);
-            extractedText = pdfData.text; // Extracting text from PDF
+            extractedText = pdfData.text;
         } else if (mimetype.startsWith("image/")) {
-            const { data } = await Tesseract.recognize(buffer, "eng"); // Extracting text from image
+            const { data } = await Tesseract.recognize(buffer, "eng");
             extractedText = data.text;
         } else {
             return res.status(400).json({ message: "Unsupported file type" });
         }
 
-        // Example analysis functions for extracted text
         const analysisResult = {
             haemoglobin: analyzeHaemoglobin(extractedText),
             sugarLevel: analyzeSugarLevel(extractedText),
         };
 
-        // Save only the analysis results to MongoDB
         const newReport = new Report({
             filename: originalname,
             extractedText,
             analysis: analysisResult,
+            email,  // ✅ Save the email
         });
 
-        await newReport.save(); // Save report to MongoDB
+        await newReport.save();
 
         res.json({
             message: "Analysis complete",
@@ -56,14 +60,11 @@ async function analyzeReport(req, res) {
     }
 }
 
-// Example analysis function for haemoglobin
-// Example analysis function for haemoglobin
 function analyzeHaemoglobin(text) {
     const regex = /Haemoglobin\s*[:]?\s*(\d+(\.\d+)?)/i;
     const match = text.match(regex);
     const haemoglobin = match ? parseFloat(match[1]) : null;
 
-    // Check if the haemoglobin level is within the optimal range (12-16 g/dL for women, 13-18 g/dL for men)
     if (haemoglobin !== null) {
         if (haemoglobin >= 12 && haemoglobin <= 16) {
             return { value: haemoglobin, message: "Haemoglobin level is optimal (for women)." };
