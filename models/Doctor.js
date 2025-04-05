@@ -4,24 +4,34 @@ const doctorSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
-        unique: true
+        trim: true
     },
     specialization: {
         type: String,
-        required: true
+        required: true,
+        trim: true
     },
     contactNumber: {
         type: String,
-        required: true
+        required: true,
+        trim: true
     },
     email: {
-        type: String
+        type: String,
+        required: true,
+        unique: true,
+        trim: true,
+        lowercase: true
     },
     imageUrl: {
-        type: String
+        type: String,
+        required: true,
+        trim: true
     }
 }, {
     timestamps: true
 });
 
-module.exports = mongoose.model("Doctor", doctorSchema);
+const Doctor = mongoose.model("Doctor", doctorSchema);
+
+module.exports = Doctor;
