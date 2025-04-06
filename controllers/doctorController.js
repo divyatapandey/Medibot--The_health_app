@@ -44,4 +44,25 @@ exports.addDoctor = async (req, res) => {
             code: "SERVER_ERROR"
         });
     }
+};
+
+// Get all doctors
+exports.getAllDoctors = async (req, res) => {
+    try {
+        const doctors = await Doctor.find({})
+            .select('-__v') // Exclude the version field
+            .sort({ name: 1 }); // Sort by name in ascending order
+
+        res.status(200).json({
+            message: "Doctors fetched successfully",
+            doctors,
+            count: doctors.length
+        });
+    } catch (error) {
+        console.error("Error in getAllDoctors:", error);
+        res.status(500).json({
+            message: "Internal server error",
+            code: "SERVER_ERROR"
+        });
+    }
 }; 

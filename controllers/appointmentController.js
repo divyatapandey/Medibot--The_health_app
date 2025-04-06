@@ -1,4 +1,5 @@
 const Appointment = require("../models/Appointment");
+const Doctor = require("../models/Doctor");
 const { sendEmail } = require("../utils/sendEmail");
 
 // Helper function to generate all possible time slots
@@ -8,6 +9,101 @@ const generateTimeSlots = () => {
         slots.push(`${i}:00-${i+1}:00`);
     }
     return slots;
+};
+
+// Get all appointments for a user
+exports.getAllAppointments = async (req, res) => {
+    try {
+        const userEmail = req.user.email; // Get email from JWT token
+
+        // Find all appointments for this user
+        const appointments = await Appointment.find({})
+            .select('-__v')
+            .sort({ date: 1, timeSlot: 1 })
+            .lean();
+
+        if (!appointments || appointments.length === 0) {
+            return res.status(200).json({
+                message: "No appointments found",
+                appointments: {},
+                totalAppointments: 0,
+                upcomingAppointments: 0,
+                pastAppointments: 0
+            });
+        }
+
+        // Get all unique doctor names from appointments
+        const doctorNames = [...new Set(appointments.map(apt => apt.doctorName))];
+        
+        // Fetch doctor details for all doctors in appointments
+        const doctors = await Doctor.find({ name: { $in: doctorNames } }).lean();
+        
+        // Create a map of doctor details for quick lookup
+        const doctorDetailsMap = doctors.reduce((map, doctor) => {
+            map[doctor.name] = doctor;
+            return map;
+        }, {});
+
+        // Format the appointments data with doctor details
+        const formattedAppointments = appointments.map(appointment => {
+            const doctorDetails = doctorDetailsMap[appointment.doctorName] || {};
+            return {
+                id: appointment._id,
+                doctorDetails: {
+                    name: doctorDetails.name || appointment.doctorName,
+                    specialization: doctorDetails.specialization || 'N/A',
+                    contactNumber: doctorDetails.contactNumber || 'N/A',
+                    email: doctorDetails.email || 'N/A',
+                    imageUrl: doctorDetails.imageUrl || 'N/A'
+                },
+                patientName: appointment.patientName,
+                date: new Date(appointment.date).toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                }),
+                rawDate: appointment.date, // Adding raw date for frontend sorting if needed
+                timeSlot: appointment.timeSlot,
+                status: new Date(appointment.date) > new Date() ? 'Upcoming' : 'Past',
+                bookedAt: new Date(appointment.createdAt).toLocaleString('en-US')
+            };
+        });
+
+        // Sort appointments by date and time
+        formattedAppointments.sort((a, b) => {
+            const dateCompare = new Date(a.rawDate) - new Date(b.rawDate);
+            if (dateCompare === 0) {
+                return a.timeSlot.localeCompare(b.timeSlot);
+            }
+            return dateCompare;
+        });
+
+        // Group appointments by date
+        const groupedAppointments = formattedAppointments.reduce((acc, appointment) => {
+            const date = appointment.date;
+            if (!acc[date]) {
+                acc[date] = [];
+            }
+            acc[date].push(appointment);
+            return acc;
+        }, {});
+
+        res.status(200).json({
+            message: "Appointments fetched successfully",
+            appointments: groupedAppointments,
+            totalAppointments: appointments.length,
+            upcomingAppointments: formattedAppointments.filter(a => a.status === 'Upcoming').length,
+            pastAppointments: formattedAppointments.filter(a => a.status === 'Past').length
+        });
+    } catch (error) {
+        console.error("Error in getAllAppointments:", error);
+        res.status(500).json({
+            message: "Internal server error",
+            error: error.message,
+            code: "SERVER_ERROR"
+        });
+    }
 };
 
 // Book an appointment
