@@ -134,3 +134,111 @@ Response:
 - Appointments require unique combinations of doctorName, timeSlot, and date
 - Date format should be YYYY-MM-DD
 - Time slot format should be HH:00-HH:00 (24-hour format)
+
+
+
+# Appointment API Documentation
+
+## 1. Book Appointment
+Book a new appointment with a doctor.
+
+**Endpoint:** POST `/v1/api/appointment`
+**Authentication:** Required (Bearer Token)
+
+**Request Body:**
+```json
+{
+    "doctorName": "Dr. Smith",
+    "patientName": "John Doe",
+    "timeSlot": "10:00-11:00",
+    "date": "2024-04-08"
+}
+```
+
+**Response:**
+```json
+{
+    "message": "Appointment booked successfully",
+    "appointment": {
+        "_id": "507f1f77bcf86cd799439011",
+        "doctorName": "Dr. Smith",
+        "patientName": "John Doe",
+        "timeSlot": "10:00-11:00",
+        "date": "2024-04-08T00:00:00.000Z",
+        "createdAt": "2024-04-06T10:30:00.000Z",
+        "updatedAt": "2024-04-06T10:30:00.000Z"
+    }
+}
+```
+
+## 2. Get All Appointments
+Retrieve all appointments with doctor details.
+
+**Endpoint:** GET `/v1/api/appointment/all`
+**Authentication:** Required (Bearer Token)
+
+**Response:**
+```json
+{
+    "message": "Appointments fetched successfully",
+    "appointments": {
+        "Monday, April 8, 2024": [
+            {
+                "id": "507f1f77bcf86cd799439011",
+                "doctorDetails": {
+                    "name": "Dr. Smith",
+                    "specialization": "Cardiologist",
+                    "contactNumber": "+1234567890",
+                    "email": "dr.smith@example.com",
+                    "imageUrl": "https://example.com/image.jpg"
+                },
+                "patientName": "John Doe",
+                "date": "Monday, April 8, 2024",
+                "timeSlot": "10:00-11:00",
+                "status": "Upcoming",
+                "bookedAt": "4/6/2024, 10:30:00 AM"
+            }
+        ]
+    },
+    "totalAppointments": 1,
+    "upcomingAppointments": 1,
+    "pastAppointments": 0
+}
+```
+
+## 3. Get Doctor's Schedule
+Get available and booked time slots for a specific doctor on a given date.
+
+**Endpoint:** GET `/v1/api/appointment/:doctor_name`
+**Authentication:** Required (Bearer Token)
+
+**Query Parameters:**
+- `date` (optional): Date in YYYY-MM-DD format. Defaults to current date.
+
+**Example:** `/v1/api/appointment/Dr.%20Smith?date=2024-04-08`
+
+**Response:**
+```json
+{
+    "doctorName": "Dr. Smith",
+    "date": "2024-04-08",
+    "availableSlots": [
+        "9:00-10:00",
+        "11:00-12:00",
+        "12:00-13:00"
+    ],
+    "bookedSlots": [
+        "10:00-11:00"
+    ]
+}
+```
+
+## Notes:
+1. All time slots are in 24-hour format
+2. Available time slots are between 9:00 to 18:00
+3. Each slot is 1 hour long
+4. Authentication token must be sent in header:
+   ```
+   Authorization: Bearer <your-jwt-token>
+   ```
+5. Dates in request body should be in ISO format (YYYY-MM-DD)
