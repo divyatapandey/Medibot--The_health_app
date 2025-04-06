@@ -13,7 +13,14 @@ exports.signup = async (req, res) => {
         const user = new User({ name, email, password: hashedPassword });
 
         await user.save();
-        res.status(201).json({ message: "User registered successfully", email: user.email });
+        res.status(201).json({ 
+            message: "User registered successfully", 
+            user: {
+                name: user.name,
+                email: user.email,
+                createdAt: user.createdAt
+            }
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -31,7 +38,19 @@ exports.login = async (req, res) => {
 
         const token = jwt.sign({ email: user.email }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
-        res.json({ token, email: user.email });
+        // Send all user details except password
+        const userDetails = {
+            name: user.name,
+            email: user.email,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt
+        };
+
+        res.json({ 
+            token, 
+            user: userDetails,
+            message: "Login successful"
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
