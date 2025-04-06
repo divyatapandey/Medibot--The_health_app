@@ -3,21 +3,31 @@ const { sendEmail } = require("../utils/sendEmail");
 
 exports.addReminder = async (req, res) => {
     try {
-        console.log("Received Reminder Data:", req.body);
+        // Get email from the authenticated user (from token)
+        const userEmail = req.user.email;
 
-        const { email, medicineName, dosage, time, days } = req.body;
-        if (!email || !medicineName || !dosage || !time || !days.length) {
-            return res.status(400).json({ message: "All fields are required." });
+        const { medicineName, dosage, time, days } = req.body;
+        if (!medicineName || !dosage || !time || !days.length) {
+            return res.status(400).json({ 
+                message: "All fields are required.",
+                code: "MISSING_FIELDS"
+            });
         }
 
         // Save reminder to MongoDB
-        const reminder = new MedicineReminder({ email, medicineName, dosage, time, days });
+        const reminder = new MedicineReminder({ 
+            email: userEmail,
+            medicineName, 
+            dosage, 
+            time, 
+            days 
+        });
         await reminder.save();
 
         // Create a fake req/res to pass to sendEmail
         const mockReq = {
             body: {
-                to: email,
+                to: userEmail,
                 subject: "Medicine Reminder Set Successfully!",
                 text: `Hello, your reminder for ${medicineName} (${dosage}) at ${time} on ${days.join(", ")} has been set.`
             }
@@ -32,10 +42,22 @@ exports.addReminder = async (req, res) => {
 
         await sendEmail(mockReq, mockRes);
 
-        res.status(201).json({ message: "Reminder added successfully and email sent!" });
+        res.status(201).json({ 
+            message: "Reminder added successfully and email sent!",
+            reminder: {
+                medicineName,
+                dosage,
+                time,
+                days,
+                createdAt: reminder.createdAt
+            }
+        });
     } catch (error) {
         console.error("Error in addReminder:", error);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ 
+            message: "Internal server error",
+            code: "SERVER_ERROR"
+        });
     }
 };
 
