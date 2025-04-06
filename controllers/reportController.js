@@ -17,11 +17,7 @@ async function analyzeReport(req, res) {
         }
 
         const { originalname, buffer, mimetype } = req.file;
-        const email = req.body.email;  // ✅ This is how you get email from FormData
-
-        if (!email) {
-            return res.status(400).json({ message: "Email is required" });
-        }
+        const userEmail = req.user.email; // Get email from JWT token
 
         let extractedText = "";
 
@@ -44,7 +40,7 @@ async function analyzeReport(req, res) {
             filename: originalname,
             extractedText,
             analysis: analysisResult,
-            email,  // ✅ Save the email
+            email: userEmail,  // Use email from token
         });
 
         await newReport.save();
