@@ -109,11 +109,13 @@ exports.getAllAppointments = async (req, res) => {
 // Book an appointment
 exports.bookAppointment = async (req, res) => {
     try {
-        const { doctorName, patientName, timeSlot, date } = req.body;
+        const { doctorName, timeSlot, date } = req.body;
         const userEmail = req.user.email; // Get email from JWT token
-        console.log(userEmail);
+        const patientName = req.user.name; // Get name from JWT token
+        console.log(userEmail)
+        console.log(patientName)
         // Validate input
-        if (!doctorName || !patientName || !timeSlot || !date) {
+        if (!doctorName || !timeSlot || !date) {
             return res.status(400).json({ 
                 message: "Missing required fields" 
             });
@@ -130,7 +132,7 @@ exports.bookAppointment = async (req, res) => {
         // Create appointment
         const appointment = new Appointment({
             doctorName,
-            patientName,
+            patientName, // Using name from JWT token
             timeSlot,
             date: new Date(date)
         });

@@ -36,7 +36,15 @@ exports.login = async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
-        const token = jwt.sign({ email: user.email }, process.env.JWT_SECRET, { expiresIn: "7d" });
+        // Include both email and name in the token payload
+        const token = jwt.sign(
+            { 
+                email: user.email,
+                name: user.name 
+            }, 
+            process.env.JWT_SECRET, 
+            { expiresIn: "7d" }
+        );
 
         // Send all user details except password
         const userDetails = {
