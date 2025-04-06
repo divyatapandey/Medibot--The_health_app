@@ -38,3 +38,25 @@ exports.addReminder = async (req, res) => {
         res.status(500).json({ message: "Internal server error" });
     }
 };
+
+exports.getUserReminders = async (req, res) => {
+    try {
+        // Get email from the authenticated user (from token)
+        const userEmail = req.user.email;
+
+        // Find all reminders for this user
+        const reminders = await MedicineReminder.find({ email: userEmail })
+            .sort({ createdAt: -1 }); // Sort by most recent first
+
+        res.status(200).json({
+            message: "Reminders fetched successfully",
+            reminders
+        });
+    } catch (error) {
+        console.error("Error in getUserReminders:", error);
+        res.status(500).json({ 
+            message: "Internal server error",
+            code: "SERVER_ERROR"
+        });
+    }
+};
