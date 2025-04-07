@@ -17,7 +17,7 @@ exports.getAllAppointments = async (req, res) => {
         const userEmail = req.user.email; // Get email from JWT token
 
         // Find all appointments for this user
-        const appointments = await Appointment.find({})
+        const appointments = await Appointment.find({email: userEmail})
             .select('-__v')
             .sort({ date: 1, timeSlot: 1 })
             .lean();
