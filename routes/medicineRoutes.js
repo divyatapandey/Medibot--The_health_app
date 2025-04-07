@@ -15,6 +15,6 @@ router.get("/reminders", authenticateUser, getUserReminders);
 router.get("/reminders/all", authenticateUser, getAllReminders);
 
 //Route for uploading and analyzing the report
-router.post("/upload-report", upload.single("report"), analyzeReport);
+router.post("/upload-report", authenticateUser, upload.single("report"), analyzeReport);
 
 module.exports = router;
