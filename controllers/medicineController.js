@@ -4,13 +4,48 @@ const { sendEmail } = require("../utils/sendEmail");
 exports.addReminder = async (req, res) => {
     try {
         // Get email from the authenticated user (from token)
+        if (!req.user || !req.user.email) {
+            return res.status(401).json({
+                message: "Authentication required",
+                code: "AUTH_REQUIRED"
+            });
+        }
         const userEmail = req.user.email;
 
         const { medicineName, dosage, time, days } = req.body;
-        if (!medicineName || !dosage || !time || !days.length) {
+
+        // Validate required fields
+        if (!medicineName || !dosage || !time || !Array.isArray(days) || days.length === 0) {
             return res.status(400).json({ 
-                message: "All fields are required.",
+                message: "All fields are required. Days must be a non-empty array.",
                 code: "MISSING_FIELDS"
+            });
+        }
+
+        // Validate time format (HH:MM)
+        if (!/^\d{2}:\d{2}$/.test(time)) {
+            return res.status(400).json({
+                message: "Invalid time format. Please use HH:MM format (e.g., 09:22)",
+                code: "INVALID_TIME_FORMAT"
+            });
+        }
+
+        // Parse hours and minutes
+        const [hours, minutes] = time.split(':').map(Number);
+        if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+            return res.status(400).json({
+                message: "Invalid time values. Hours must be 00-23 and minutes must be 00-59",
+                code: "INVALID_TIME_VALUES"
+            });
+        }
+
+        // Validate days
+        const validDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const invalidDays = days.filter(day => !validDays.includes(day));
+        if (invalidDays.length > 0) {
+            return res.status(400).json({
+                message: `Invalid day names: ${invalidDays.join(', ')}`,
+                code: "INVALID_DAYS"
             });
         }
 
@@ -29,7 +64,21 @@ exports.addReminder = async (req, res) => {
             body: {
                 to: userEmail,
                 subject: "Medicine Reminder Set Successfully!",
-                text: `Hello, your reminder for ${medicineName} (${dosage}) at ${time} on ${days.join(", ")} has been set.`
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <h2 style="color: #2c3e50;">Medicine Reminder Created</h2>
+                        <p>Hello,</p>
+                        <p>Your medicine reminder has been set successfully:</p>
+                        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                            <p><strong>Medicine:</strong> ${medicineName}</p>
+                            <p><strong>Dosage:</strong> ${dosage}</p>
+                            <p><strong>Time:</strong> ${time}</p>
+                            <p><strong>Days:</strong> ${days.join(", ")}</p>
+                        </div>
+                        <p>You will receive reminders at the specified time on the selected days.</p>
+                        <p>Best regards,<br>Your Healthcare Team</p>
+                    </div>
+                `
             }
         };
 
@@ -43,8 +92,9 @@ exports.addReminder = async (req, res) => {
         await sendEmail(mockReq, mockRes);
 
         res.status(201).json({ 
-            message: "Reminder added successfully and email sent!",
+            message: "Reminder added successfully and confirmation email sent!",
             reminder: {
+                id: reminder._id,
                 medicineName,
                 dosage,
                 time,
@@ -54,6 +104,13 @@ exports.addReminder = async (req, res) => {
         });
     } catch (error) {
         console.error("Error in addReminder:", error);
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({
+                message: "Validation error",
+                errors: Object.values(error.errors).map(err => err.message),
+                code: "VALIDATION_ERROR"
+            });
+        }
         res.status(500).json({ 
             message: "Internal server error",
             code: "SERVER_ERROR"
