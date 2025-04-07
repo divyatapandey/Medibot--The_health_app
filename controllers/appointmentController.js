@@ -131,6 +131,7 @@ exports.bookAppointment = async (req, res) => {
 
         // Create appointment
         const appointment = new Appointment({
+            userEmail,
             doctorName,
             patientName, // Using name from JWT token
             timeSlot,
