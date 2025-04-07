@@ -62,6 +62,38 @@ const sendReminders = async (req, res) => {
     }
 };
 
+
+const deleteUserReminders = async (req, res) => {
+    try {
+      const userEmail = req.user.email;
+      const result = await Reminder.deleteMany({ email: userEmail });
+  
+      res.status(200).json({ message: `${result.deletedCount} reminders deleted for ${userEmail}` });
+    } catch (error) {
+      console.error('Error in deleteUserReminders:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+  
+  const deleteSpecificReminders = async (req, res) => {
+    try {
+      const reminderId = req.params.id;
+      const result = await Reminder.findByIdAndDelete(reminderId);
+  
+      if (!result) {
+        return res.status(404).json({ message: 'Reminder not found' });
+      }
+  
+      res.status(200).json({ message: 'Reminder deleted successfully', deletedReminder: result });
+    } catch (error) {
+      console.error('Error in deleteSpecificReminders:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+  
+
 module.exports = {
-    sendReminders
+    sendReminders,
+    deleteUserReminders,
+    deleteSpecificReminders
 }; 

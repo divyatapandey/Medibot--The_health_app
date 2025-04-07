@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const AppointmentSchema = new mongoose.Schema({
     doctorName: { 
         type: String, 
@@ -25,8 +24,6 @@ const AppointmentSchema = new mongoose.Schema({
         required: true
     }
 }, { timestamps: true });
-
 // Compound index to prevent double booking
 AppointmentSchema.index({ doctorName: 1, timeSlot: 1, date: 1 }, { unique: true });
-
 module.exports = mongoose.model("Appointment", AppointmentSchema); 
