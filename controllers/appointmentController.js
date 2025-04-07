@@ -109,7 +109,7 @@ exports.getAllAppointments = async (req, res) => {
 // Book an appointment
 exports.bookAppointment = async (req, res) => {
     try {
-        const { doctorName, timeSlot, date } = req.body;
+        const {doctorName, timeSlot, date } = req.body;
         const userEmail = req.user.email; // Get email from JWT token
         const patientName = req.user.name; // Get name from JWT token
         console.log(userEmail)
@@ -131,6 +131,7 @@ exports.bookAppointment = async (req, res) => {
 
         // Create appointment
         const appointment = new Appointment({
+            userEmail,
             doctorName,
             patientName, // Using name from JWT token
             timeSlot,
