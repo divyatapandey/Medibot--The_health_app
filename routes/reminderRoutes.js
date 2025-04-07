@@ -4,6 +4,9 @@ const { sendReminders , deleteUserReminders , deleteSpecificReminders} = require
 
 
 router.post('/send-reminders', sendReminders);
-router.get('/del-user-reminders', deleteUserReminders);
-router.get('/del-specific-reminders', deleteSpecificReminders);
+// DELETE all reminders for a user
+router.delete('/reminders', deleteUserReminders); // uses req.user.email
+
+// DELETE a specific reminder by ID
+router.delete('/reminders/:id', deleteSpecificReminders); // uses req.params.id
 module.exports = router; 
