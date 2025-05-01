@@ -31,7 +31,7 @@ const job = cron.schedule('*/10 * * * *', async () => {
         // const response = await axios.post(`http://localhost:${process.env.PORT || 5000}/v1/api/reminder/send-reminders`);
         await axios.post('https://medibot-8u6y.onrender.com/v1/api/reminder/send-reminders');
     } catch (error) {
-       
+       console.log(error);
     }
 });
 

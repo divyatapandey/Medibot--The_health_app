@@ -1,6 +1,6 @@
 const MedicineReminder = require('../models/MedicineReminder');
 const nodemailer = require('nodemailer');
-const moment = require('moment');
+const moment = require('moment-timezone');
 
 // Create email transporter
 const transporter = nodemailer.createTransport({
@@ -13,9 +13,9 @@ const transporter = nodemailer.createTransport({
 
 const sendReminders = async (req, res) => {
     try {
-        const currentTime = moment();
+        // Set current time to IST
+        const currentTime = moment().tz('Asia/Kolkata');
         const currentDay = currentTime.format('dddd');
-        const currentHour = currentTime.format('HH:mm');
 
         // Get all reminders
         const reminders = await MedicineReminder.find({});
@@ -41,7 +41,7 @@ const sendReminders = async (req, res) => {
                                 <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
                                     <p><strong>Medicine:</strong> ${reminder.medicineName}</p>
                                     <p><strong>Dosage:</strong> ${reminder.dosage}</p>
-                                    <p><strong>Time:</strong> ${reminder.time}</p>
+                                    <p><strong>Time:</strong> ${reminder.time} IST</p>
                                 </div>
                                 <p>Please take your medicine as prescribed.</p>
                                 <p>Best regards,<br>Your Healthcare Team</p>
